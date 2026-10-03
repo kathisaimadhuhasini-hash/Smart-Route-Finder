@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Route Finder | DAA Algorithmic Engine</title>
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- Top Navigation Bar -->
+    <header class="navbar">
+      <div class="brand">
+        <div class="brand-logo">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="6" cy="19" r="3"></circle>
+            <path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"></path>
+            <circle cx="18" cy="5" r="3"></circle>
+          </svg>
+        </div>
+        <div>
+          <h1 class="brand-title">Smart Route Finder</h1>
+          <span class="brand-tagline">Design & Analysis of Algorithms — Multi-Path Routing Engine</span>
+        </div>
+      </div>
+
+      <div class="nav-badges">
+        <span class="algo-pill pill-dijkstra">Dijkstra O((V+E) log V)</span>
+        <span class="algo-pill pill-astar">A* Search (Haversine)</span>
+        <span class="algo-pill pill-fw">Floyd-Warshall Θ(V³)</span>
+      </div>
+
+      <div class="nav-actions">
+        <button id="btn-quick-compare" class="btn-ghost" title="Compare Dijkstra, A*, and Floyd-Warshall side-by-side">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="20" x2="18" y2="10"></line>
+            <line x1="12" y1="20" x2="12" y2="4"></line>
+            <line x1="6" y1="20" x2="6" y2="14"></line>
+          </svg>
+          Compare All
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="main-content">
+      
+      <!-- Left Sidebar: Controls & Analytics -->
+      <aside class="sidebar" id="sidebar">
+        
+        <!-- Route Selection Card -->
+        <section class="card route-config-card">
+          <h2 class="card-heading">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
+            </svg>
+            Route Planning
+          </h2>
+
+          <div class="form-group">
+            <label for="select-source">
+              <span class="pin-dot pin-source"></span> Starting Point (Source):
+            </label>
+            <select id="select-source" class="form-control">
+              <option value="" disabled selected>Select origin junction...</option>
+            </select>
+          </div>
+
+          <div class="swap-row">
+            <button id="btn-swap-nodes" class="btn-icon" title="Swap Source and Destination">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+                <polyline points="17 14 12 9 7 14"></polyline>
+                <line x1="12" y1="9" x2="12" y2="21"></line>
+              </svg>
+            </button>
+          </div>
+
+          <div class="form-group">
+            <label for="select-target">
+              <span class="pin-dot pin-target"></span> Destination (Target):
+            </label>
+            <select id="select-target" class="form-control">
+              <option value="" disabled selected>Select destination junction...</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Select Algorithm:</label>
+            <div class="algo-selector-grid">
+              <label class="algo-option">
+                <input type="radio" name="algorithm" value="dijkstra" checked>
+                <div class="algo-card">
+                  <span class="algo-name">Dijkstra</span>
+                  <span class="algo-sub">Min-Heap Greedy</span>
+                </div>
+              </label>
+
+              <label class="algo-option">
+                <input type="radio" name="algorithm" value="astar">
+                <div class="algo-card">
+                  <span class="algo-name">A* Search</span>
+                  <span class="algo-sub">Heuristic f=g+h</span>
+                </div>
+              </label>
+
+              <label class="algo-option">
+                <input type="radio" name="algorithm" value="floyd_warshall">
+                <div class="algo-card">
+                  <span class="algo-name">Floyd-Warshall</span>
+                  <span class="algo-sub">Dynamic Prog.</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Quick Presets -->
+          <div class="presets-section">
+            <span class="presets-label">Popular Corridors:</span>
+            <div class="presets-pills">
+              <button class="preset-pill" data-src="CYBER_TOWERS" data-tgt="FINANCIAL_DISTRICT">IT ➔ FinTech</button>
+              <button class="preset-pill" data-src="HCU_UNIVERSITY" data-tgt="JUBILEE_HILLS">Campus ➔ City</button>
+              <button class="preset-pill" data-src="GACHIBOWLI_STADIUM" data-tgt="CABLE_BRIDGE">Stadium ➔ Bridge</button>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="actions-grid">
+            <button id="btn-find-route" class="btn btn-primary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              Find Route
+            </button>
+            <button id="btn-compare-all" class="btn btn-secondary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="20" x2="18" y2="10"></line>
+                <line x1="12" y1="20" x2="12" y2="4"></line>
+                <line x1="6" y1="20" x2="6" y2="14"></line>
+              </svg>
+              Compare All
+            </button>
+          </div>
+        </section>
+
+        <!-- Route Results Summary (Visible after finding route) -->
+        <section id="results-card" class="card results-card hidden">
+          <div class="card-header-flex">
+            <h2 class="card-heading">
+              <span id="res-algo-badge" class="badge">Dijkstra</span>
+              Selected Route
+            </h2>
+            <span id="res-hops-count" class="text-muted">4 junctions</span>
+          </div>
+
+          <!-- Metrics Row -->
+          <div class="metrics-grid">
+            <div class="metric-box">
+              <span class="metric-label">Total Distance / Cost</span>
+              <span id="metric-distance" class="metric-val primary-val">-- km</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-label">Estimated Time</span>
+              <span id="metric-time" class="metric-val">-- min</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-label">Nodes Explored</span>
+              <span id="metric-nodes" class="metric-val">--</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-label">Execution Time</span>
+              <span id="metric-runtime" class="metric-val mono-val">-- ms</span>
+            </div>
+          </div>
+
+          <!-- Route Selection Tabs (Optimal vs Alternatives) -->
+          <div class="route-layers-toggle">
+            <span class="toggle-title">Active Route on Map:</span>
+            <div class="btn-group-toggle" id="route-view-toggles">
+              <button class="layer-btn active" data-route="optimal">
+                <span class="route-color-indicator opt"></span> Selected Optimal Route
+              </button>
+              <button class="layer-btn" data-route="alt_1" id="btn-toggle-alt1" style="display:none;">
+                <span class="route-color-indicator alt1"></span> Alt 1
+              </button>
+              <button class="layer-btn" data-route="alt_2" id="btn-toggle-alt2" style="display:none;">
+                <span class="route-color-indicator alt2"></span> Alt 2
+              </button>
+            </div>
+          </div>
+
+          <!-- DAA Explainer: Why Selected Route is Optimal -->
+          <div class="explainer-box">
+            <div class="explainer-header">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              </svg>
+              <h3>Why Selected Route is Optimal</h3>
+            </div>
+            
+            <div class="proof-content">
+              <div class="daa-badge" id="exp-principle">Greedy Choice Property</div>
+              <p id="exp-summary" class="exp-text">--</p>
+              
+              <div class="exp-alternatives" id="exp-alternatives-container">
+                <!-- Dynamically populated comparison against alternatives -->
+              </div>
+            </div>
+          </div>
+
+          <!-- ALGORITHM-SPECIFIC VISUAL SECTION -->
+
+          <!-- 1. A* Heuristic States Section -->
+          <div id="section-astar" class="algo-detail-section hidden">
+            <div class="section-title-flex">
+              <h4>A* Search States & Evaluation</h4>
+              <span class="section-sub-badge">f(n) = g(n) + h(n)</span>
+            </div>
+            <p class="section-desc">
+              Heuristic \(h(n)\) is straight-line Haversine geodesic distance. Because \(h(n) \le d^*(n, \text{goal})\) (admissible), A* focuses directly toward the goal without overestimating.
+            </p>
+            <div class="table-container">
+              <table class="algo-table" id="astar-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Explored Node (n)</th>
+                    <th>g(n) <small>(From Start)</small></th>
+                    <th>h(n) <small>(To Goal)</small></th>
+                    <th>f(n) <small>(Priority)</small></th>
+                    <th>Predecessor</th>
+                  </tr>
+                </thead>
+                <tbody id="astar-table-body">
+                  <!-- Populated by JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 2. Dijkstra Visited Nodes Section -->
+          <div id="section-dijkstra" class="algo-detail-section hidden">
+            <div class="section-title-flex">
+              <h4>Dijkstra Visited / Explored Nodes</h4>
+              <span class="section-sub-badge">Min-Heap Greedy</span>
+            </div>
+            <p class="section-desc">
+              Settles nodes in order of monotonically increasing distance \(d[u]\). Once extracted from the priority queue, distance is permanently finalized.
+            </p>
+            <div class="table-container">
+              <table class="algo-table" id="dijkstra-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Settled Vertex (u)</th>
+                    <th>Settled Cost d[u]</th>
+                    <th>Predecessor</th>
+                  </tr>
+                </thead>
+                <tbody id="dijkstra-table-body">
+                  <!-- Populated by JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 3. Floyd-Warshall Distance Matrix Section -->
+          <div id="section-floyd" class="algo-detail-section hidden">
+            <div class="section-title-flex">
+              <h4>Floyd-Warshall All-Pairs Distance Matrix</h4>
+              <span class="section-sub-badge">Dynamic Programming Θ(V³)</span>
+            </div>
+            <p class="section-desc" id="fw-info-text">
+              Solves all-pairs shortest distances simultaneously. Matrix cell \(D[\text{source}][\text{target}]\) is highlighted below.
+            </p>
+            <div class="matrix-wrapper">
+              <div class="matrix-scroll-container" id="matrix-container">
+                <!-- Dynamically populated NxN table -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Turn-by-Turn Steps Accordion -->
+          <details class="steps-details">
+            <summary>
+              <span>Selected Route Leg Details (<span id="steps-count">0</span> segments)</span>
+            </summary>
+            <div id="steps-list" class="steps-list">
+              <!-- Steps items -->
+            </div>
+          </details>
+
+        </section>
+
+      </aside>
+
+      <!-- Right Column: Interactive Map -->
+      <section class="map-wrapper">
+        <div id="map"></div>
+
+        <!-- Floating Map Legend -->
+        <div class="map-overlay-legend">
+          <div class="legend-header">Map Legend</div>
+          <div class="legend-row">
+            <span class="legend-line line-optimal"></span>
+            <span>Selected Optimal Route</span>
+          </div>
+          <div class="legend-row">
+            <span class="legend-line line-alt1"></span>
+            <span>Alternative Route 1 (Detour)</span>
+          </div>
+          <div class="legend-row">
+            <span class="legend-line line-alt2"></span>
+            <span>Alternative Route 2 (Bypass)</span>
+          </div>
+          <div class="legend-row">
+            <span class="legend-dot dot-source"></span>
+            <span>Source Origin</span>
+          </div>
+          <div class="legend-row">
+            <span class="legend-dot dot-target"></span>
+            <span>Destination</span>
+          </div>
+        </div>
+
+        <!-- Map Controls -->
+        <div class="map-floating-controls">
+          <button id="btn-fit-bounds" class="map-btn" title="Fit Map to Network">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <polyline points="9 21 3 21 3 15"></polyline>
+              <line x1="21" y1="3" x2="14" y2="10"></line>
+              <line x1="3" y1="21" x2="10" y2="14"></line>
+            </svg>
+            Fit Network
+          </button>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Side-by-Side Algorithm Comparison Modal -->
+    <div id="compare-modal" class="modal-backdrop hidden">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <div>
+            <h2 class="modal-title">Algorithm Comparison Benchmark</h2>
+            <p class="modal-subtitle" id="modal-route-label">Comparing Dijkstra vs A* vs Floyd-Warshall</p>
+          </div>
+          <button id="btn-close-modal" class="btn-close" aria-label="Close">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          
+          <!-- Optimality Consistency Banner -->
+          <div id="modal-verdict-banner" class="verdict-banner banner-success">
+            <div class="banner-icon">✓</div>
+            <div>
+              <strong id="banner-title">Optimality Verified</strong>
+              <p id="banner-desc">All three algorithms independently converged on the identical global shortest cost.</p>
+            </div>
+          </div>
+
+          <!-- Comparison Cards Grid -->
+          <div class="compare-grid">
+            
+            <!-- Dijkstra Card -->
+            <div class="compare-card" id="card-dijkstra">
+              <div class="compare-card-header">
+                <h3>Dijkstra's Algorithm</h3>
+                <span class="card-badge">Greedy Min-Heap</span>
+              </div>
+              <div class="stat-highlight">
+                <span class="stat-num" id="cmp-dijkstra-cost">--</span>
+                <span class="stat-unit">km total distance</span>
+              </div>
+              <ul class="compare-stats-list">
+                <li><span>Execution Time:</span> <strong id="cmp-dijkstra-time">-- ms</strong></li>
+                <li><span>Nodes Explored:</span> <strong id="cmp-dijkstra-nodes">--</strong></li>
+                <li><span>Heap Operations:</span> <strong id="cmp-dijkstra-ops">--</strong></li>
+                <li><span>Time Complexity:</span> <code class="mono-code">O((V+E) log V)</code></li>
+                <li><span>Space Complexity:</span> <code class="mono-code">O(V)</code></li>
+              </ul>
+              <div class="card-footer-notes">
+                <strong>Approach:</strong> Uninformed search exploring radially until destination is popped.
+              </div>
+            </div>
+
+            <!-- A* Search Card -->
+            <div class="compare-card card-featured" id="card-astar">
+              <div class="card-ribbon">Fewest Nodes</div>
+              <div class="compare-card-header">
+                <h3>A* Search</h3>
+                <span class="card-badge">Heuristic Guided</span>
+              </div>
+              <div class="stat-highlight">
+                <span class="stat-num" id="cmp-astar-cost">--</span>
+                <span class="stat-unit">km total distance</span>
+              </div>
+              <ul class="compare-stats-list">
+                <li><span>Execution Time:</span> <strong id="cmp-astar-time">-- ms</strong></li>
+                <li><span>Nodes Explored:</span> <strong id="cmp-astar-nodes" class="text-emerald">--</strong></li>
+                <li><span>Heap Operations:</span> <strong id="cmp-astar-ops">--</strong></li>
+                <li><span>Time Complexity:</span> <code class="mono-code">O(E) avg / O((V+E)logV)</code></li>
+                <li><span>Space Complexity:</span> <code class="mono-code">O(V)</code></li>
+              </ul>
+              <div class="card-footer-notes">
+                <strong>Approach:</strong> Informed search using Haversine straight-line heuristic \(h(n) \le d^*(n, \text{goal})\).
+              </div>
+            </div>
+
+            <!-- Floyd-Warshall Card -->
+            <div class="compare-card" id="card-fw">
+              <div class="compare-card-header">
+                <h3>Floyd-Warshall</h3>
+                <span class="card-badge">Dynamic Prog.</span>
+              </div>
+              <div class="stat-highlight">
+                <span class="stat-num" id="cmp-fw-cost">--</span>
+                <span class="stat-unit">km total distance</span>
+              </div>
+              <ul class="compare-stats-list">
+                <li><span>Matrix Compute Time:</span> <strong id="cmp-fw-time">-- ms</strong></li>
+                <li><span>Query Lookup Time:</span> <strong id="cmp-fw-lookup">-- ms</strong></li>
+                <li><span>Total DP Iterations:</span> <strong id="cmp-fw-iterations">--</strong></li>
+                <li><span>Time Complexity:</span> <code class="mono-code">Θ(V³)</code></li>
+                <li><span>Space Complexity:</span> <code class="mono-code">Θ(V²)</code></li>
+              </ul>
+              <div class="card-footer-notes">
+                <strong>Approach:</strong> Computes all-pairs shortest paths simultaneously via DP optimal substructure.
+              </div>
+            </div>
+
+          </div>
+
+          <!-- DAA Efficiency Insight -->
+          <div class="benchmark-analysis">
+            <h4>DAA Complexity & Efficiency Analysis</h4>
+            <p id="cmp-analysis-text">--</p>
+          </div>
+
+        </div>
+
+        <div class="modal-footer">
+          <button id="btn-modal-close-bottom" class="btn btn-secondary">Close</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <!-- Application JS -->
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
